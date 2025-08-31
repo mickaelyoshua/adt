@@ -28,6 +28,7 @@ impl<T> Default for LinkedList<T> {
     }
 }
 
+// Define behavior when a value is going out of scope
 impl<T> Drop for LinkedList<T> {
     fn drop(&mut self) {
         // take ownership of head with 'take()'
