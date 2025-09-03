@@ -1,4 +1,4 @@
-use std::alloc::{dealloc, Layout};
+use std::alloc::{alloc, dealloc, handle_alloc_error, Layout};
 use std::ptr;
 
 struct Node<T> {
@@ -34,7 +34,61 @@ impl<T> Default for LinkedList<T> {
 }
 
 impl<T> LinkedList<T> {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn push_left(&mut self, val: T) {
+        let layout = Layout::new::<Node<T>>();
+        let new_node_ptr = unsafe { alloc(layout) };
+
+        // if some error happen during allocation
+        if new_node_ptr.is_null() {
+            handle_alloc_error(layout);
+        }
+        
+        // from *mut u8 -> *mut Node<T>
+        let new_node_ptr = new_node_ptr as *mut Node<T>;
+
+        unsafe {
+            ptr::write(new_node_ptr, Node {
+                val,
+                next: self.head,
+            });
+        }
+
+        if self.tail.is_null() {
+            self.tail = new_node_ptr;
+        }
+
+        self.head = new_node_ptr;
+    }
+
+    pub fn push_right(&mut self, val: T) {
+        let layout = Layout::new::<Node<T>>();
+        let new_node_ptr = unsafe { alloc(layout) };
+
+        if new_node_ptr.is_null() {
+            handle_alloc_error(layout);
+        }
+
+        let new_node_ptr = new_node_ptr as *mut Node<T>;
+
+        unsafe {
+            ptr::write(new_node_ptr, Node {
+                val,
+                next: ptr::null_mut(),
+            });
+        }
+
+        if self.head.is_null() {
+            self.head = new_node_ptr;
+            self.tail = new_node_ptr;
+        } else {
+            unsafe {
+                (*self.tail).next = new_node_ptr;
+            }
+            self.tail = new_node_ptr;
+        }
     }
 }
