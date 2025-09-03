@@ -1,4 +1,5 @@
 use std::alloc::{alloc, dealloc, handle_alloc_error, Layout};
+use std::marker::PhantomData;
 use std::ptr;
 
 struct Node<T> {
@@ -53,22 +54,50 @@ impl<T> FromIterator<T> for LinkedList<T> {
     }
 }
 
+// Structure to hold the iterator state
+pub struct Iter<'a, T> {
+    next: *const Node<T>,
+    _marker: PhantomData<&'a T>,
+    // this PhantomData make the compiler treats this structure like the 
+    // 'a lifetime is beeing used, it contains a reference &'a T. That way it binds the
+    // lifetime to the LinkedList created ensuring that the iterator will not live more than the
+    // list
+}
+
+impl<'a,T> Iterator for Iter<'a,T> {
+    type Item = &'a T; // defines what type the iterator yields
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if !self.next.is_null() {
+            unsafe {
+                let node = &*self.next; // get the current node
+                self.next = node.next; // update the current node to the next
+                Some(&node.val)
+            }
+        } else {
+            None
+        }
+    }
+}
+
 impl<T> LinkedList<T> {
     pub fn new() -> Self {
         Self::default()
     }
 
+    // to get the iterator struct
+    pub fn iter<'a>(&self) -> Iter<'a,T> {
+        Iter { next: self.head, _marker: PhantomData }
+    }
+
     pub fn push_left(&mut self, val: T) {
         let layout = Layout::new::<Node<T>>();
-        let new_node_ptr = unsafe { alloc(layout) };
+        let new_node_ptr = unsafe { alloc(layout) as *mut Node<T> };
 
         // if some error happen during allocation
         if new_node_ptr.is_null() {
             handle_alloc_error(layout);
         }
-        
-        // from *mut u8 -> *mut Node<T>
-        let new_node_ptr = new_node_ptr as *mut Node<T>;
 
         unsafe {
             ptr::write(new_node_ptr, Node {
@@ -77,22 +106,20 @@ impl<T> LinkedList<T> {
             });
         }
 
+        self.head = new_node_ptr;
+
         if self.tail.is_null() {
             self.tail = new_node_ptr;
         }
-
-        self.head = new_node_ptr;
     }
 
     pub fn push_right(&mut self, val: T) {
         let layout = Layout::new::<Node<T>>();
-        let new_node_ptr = unsafe { alloc(layout) };
+        let new_node_ptr = unsafe { alloc(layout) as *mut Node<T> };
 
         if new_node_ptr.is_null() {
             handle_alloc_error(layout);
         }
-
-        let new_node_ptr = new_node_ptr as *mut Node<T>;
 
         unsafe {
             ptr::write(new_node_ptr, Node {
@@ -101,14 +128,22 @@ impl<T> LinkedList<T> {
             });
         }
 
-        if self.head.is_null() {
+        if let Some(tail_node) = unsafe { self.tail.as_mut() } {
+            tail_node.next = new_node_ptr;
+        } else { // if tail is null the new node is also head
             self.head = new_node_ptr;
-            self.tail = new_node_ptr;
-        } else {
-            unsafe {
-                (*self.tail).next = new_node_ptr;
-            }
-            self.tail = new_node_ptr;
         }
+
+        self.tail = new_node_ptr;
+    }
+}
+
+impl<T: PartialEq> LinkedList<T> {
+    pub fn find(&self, val: &T) -> Option<&T> {
+        self.iter().find(|&v| v == val)
+    }
+
+    pub fn contains(&self, val: &T) -> bool {
+        self.iter().any(|v| v == val)
     }
 }
