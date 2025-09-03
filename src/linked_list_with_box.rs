@@ -1,5 +1,8 @@
 use std::ptr;
 
+// Box is necessary because the struct Node is a recrusive struct
+// So to make the compiler know how much space must be allocated it is used
+// a pointer. In this case a Smart and raw pointer
 type Link<T> = Option<Box<Node<T>>>;
 
 pub struct LinkedList<T> {
@@ -41,6 +44,16 @@ impl<T> Drop for LinkedList<T> {
     }
 }
 
+impl<T> From<Vec<T>> for LinkedList<T> {
+    fn from(v: Vec<T>) -> LinkedList<T> {
+        let mut list = LinkedList::new();
+        for item in v {
+            list.push_right(item);
+        }
+        list
+    }
+}
+
 impl<T> LinkedList<T> {
     pub fn new() -> Self {
         Self::default()
@@ -79,6 +92,11 @@ impl<T> LinkedList<T> {
         // update the tail pointer to new node
         self.tail = new_tail_ptr;
     }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum DeleteError {
+    NotFound,
 }
 
 impl<T: PartialEq> LinkedList<T> {
@@ -125,5 +143,50 @@ impl<T: PartialEq> LinkedList<T> {
 
     fn contains_with(&self, val: &T, search_type: SearchType) -> bool {
         self.find_with(val, search_type).is_some()
+    }
+
+    fn delete_value(&mut self, val: &T) -> Result<T,DeleteError> {
+        if self.head.is_none() {
+            return Err(DeleteError::NotFound);
+        }
+        
+        let head_node = &self.head.as_ref().unwrap(); // reference so it does not take ownership yet
+        if head_node.val == *val {
+            let deleted_head = self.head.take().unwrap();
+            self.head = deleted_head.next;
+
+            // if after moving the ownership of the head to next, head is none
+            // it means the list is now empty
+            if self.head.is_none() {
+                self.tail = ptr::null_mut();
+            }
+
+            return Ok(deleted_head.val);
+        }
+
+        let mut current = &mut self.head;
+
+        while let Some(current_node) = current {
+            // is not the current node since is not the head (checked before)
+            if let Some(next_node) = &mut current_node.next { // see the next node
+                if next_node.val == *val {
+                    // take ownership of the node after the current
+                    let delete_node = current_node.next.take().unwrap();
+
+                    // give the ownership to the current
+                    current_node.next = delete_node.next;
+
+                    // now the next node is empty (deleted the tail)
+                    if current_node.next.is_none() {
+                        self.tail = &mut **current_node;
+                    }
+
+                    return Ok(delete_node.val);
+                }
+            }
+            // update to evaluate the node after the next one
+            current = &mut current_node.next;
+        }
+        Err(DeleteError::NotFound)
     }
 }
