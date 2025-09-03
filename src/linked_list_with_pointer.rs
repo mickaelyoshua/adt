@@ -33,6 +33,26 @@ impl<T> Default for LinkedList<T> {
     }
 }
 
+impl<T> From<Vec<T>> for LinkedList<T> {
+    fn from(value: Vec<T>) -> Self {
+        let mut list = LinkedList::new();
+        for item in value {
+            list.push_right(item);
+        }
+        list
+    }
+}
+
+impl<T> FromIterator<T> for LinkedList<T> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        let mut list = LinkedList::new();
+        for item in iter {
+            list.push_right(item);
+        }
+        list
+    }
+}
+
 impl<T> LinkedList<T> {
     pub fn new() -> Self {
         Self::default()
