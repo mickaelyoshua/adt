@@ -138,9 +138,8 @@ impl<T> LinkedList<T> {
     }
 }
 
-enum DeleteError {
+pub enum DeleteError {
     NotFound,
-    EmptyList,
 }
 
 impl<T: PartialEq> LinkedList<T> {
@@ -152,30 +151,47 @@ impl<T: PartialEq> LinkedList<T> {
         self.iter().any(|v| v == val)
     }
 
-    pub fn delete(&mut self, val: &T) -> Result<T,DeleteError> {
+    pub fn delete(&mut self, val: &T) -> Result<T, DeleteError> {
         if self.head.is_null() {
-            return Err(DeleteError::EmptyList);
+            return Err(DeleteError::NotFound);
         }
 
-        let mut current = self.head;
+        unsafe {
+            // Case 1: Handle the head node
+            if (*self.head).val == *val {
+                let node_to_delete = self.head;
+                let value = ptr::read(&(*node_to_delete).val);
 
-        // if the deleted node is the head
-        if let Some(node) = unsafe { current.as_mut() } && node.val == *val {
-            let value = unsafe { ptr::read(&node.val) };
+                self.head = (*node_to_delete).next;
+                if self.head.is_null() { // If list is now empty
+                    self.tail = ptr::null_mut();
+                }
 
-            self.head = node.next;
-            // if head is also the tail
-            if self.tail == current {
-                self.tail = node.next;
+                let layout = Layout::new::<Node<T>>();
+                dealloc(node_to_delete as *mut u8, layout);
+                return Ok(value);
             }
-            let layout = Layout::new::<Node<T>>();
-            unsafe {
-                dealloc(current as *mut u8, layout);
+
+            let mut current = self.head;
+            while !(*current).next.is_null() {
+                let next_node_ptr = (*current).next;
+                if (*next_node_ptr).val == *val {
+                    let node_to_delete = next_node_ptr;
+                    let value = ptr::read(&(*node_to_delete).val);
+
+                    (*current).next = (*node_to_delete).next;
+
+                    if self.tail == node_to_delete {
+                        self.tail = current;
+                    }
+
+                    let layout = Layout::new::<Node<T>>();
+                    dealloc(node_to_delete as *mut u8, layout);
+                    return Ok(value);
+                }
+                current = (*current).next;
             }
-            return Ok(value);
         }
-
-        
 
         Err(DeleteError::NotFound)
     }
