@@ -140,6 +140,7 @@ impl<T> LinkedList<T> {
 
 enum DeleteError {
     NotFound,
+    EmptyList,
 }
 
 impl<T: PartialEq> LinkedList<T> {
@@ -152,7 +153,30 @@ impl<T: PartialEq> LinkedList<T> {
     }
 
     pub fn delete(&mut self, val: &T) -> Result<T,DeleteError> {
-        let current = self.head;
+        if self.head.is_null() {
+            return Err(DeleteError::EmptyList);
+        }
+
+        let mut current = self.head;
+
+        // if the deleted node is the head
+        if let Some(node) = unsafe { current.as_mut() } && node.val == *val {
+            let value = unsafe { ptr::read(&node.val) };
+
+            self.head = node.next;
+            // if head is also the tail
+            if self.tail == current {
+                self.tail = node.next;
+            }
+            let layout = Layout::new::<Node<T>>();
+            unsafe {
+                dealloc(current as *mut u8, layout);
+            }
+            return Ok(value);
+        }
+
+        
+
         Err(DeleteError::NotFound)
     }
 }
