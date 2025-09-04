@@ -138,6 +138,10 @@ impl<T> LinkedList<T> {
     }
 }
 
+enum DeleteError {
+    NotFound,
+}
+
 impl<T: PartialEq> LinkedList<T> {
     pub fn find(&self, val: &T) -> Option<&T> {
         self.iter().find(|&v| v == val)
@@ -145,5 +149,10 @@ impl<T: PartialEq> LinkedList<T> {
 
     pub fn contains(&self, val: &T) -> bool {
         self.iter().any(|v| v == val)
+    }
+
+    pub fn delete(&mut self, val: &T) -> Result<T,DeleteError> {
+        let current = self.head;
+        Err(DeleteError::NotFound)
     }
 }
