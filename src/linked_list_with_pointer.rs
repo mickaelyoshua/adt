@@ -196,3 +196,8 @@ impl<T: PartialEq> LinkedList<T> {
         Err(DeleteError::NotFound)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+}

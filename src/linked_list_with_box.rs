@@ -1,4 +1,4 @@
-use std::ptr;
+use std::ptr::{self, null_mut};
 
 type Link<T> = Option<Box<Node<T>>>;
 
@@ -82,7 +82,130 @@ impl<T: PartialEq> LinkedList<T> {
         None
     }
 
+    // take-inspect-replace logic
     pub fn delete(&mut self, val: &T) -> Option<T> {
+        // previous ptr to update the tail if necessary
+        let mut prev_node_ptr: *mut Node<T> = ptr::null_mut();
+        let mut current_link = &mut self.head;
 
+        // dont borrow, take ownership. Take out of the list to manipulate
+        while let Some(mut current_node) = current_link.take() {
+            if current_node.val == *val {
+                *current_link = current_node.next.take();
+                
+                let deleted_node_ptr: *const Node<T> = &*current_node;
+                if ptr::eq(self.tail, deleted_node_ptr) {
+                    self.tail = prev_node_ptr;
+                }
+
+                return Some(current_node.val);
+            }
+
+            // update previous pointer
+            prev_node_ptr = &mut *current_node;
+            
+            // put back on the list
+            *current_link = Some(current_node);
+
+            // update to the next
+            current_link = &mut current_link.as_mut().unwrap().next;
+        }
+
+        None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new_list_is_empty() {
+        unimplemented!();
+    }
+
+    #[test]
+    fn test_push_left_to_empty_list() {
+        unimplemented!();
+    }
+
+    #[test]
+    fn test_push_left_updates_head() {
+        unimplemented!();
+    }
+
+    #[test]
+    fn test_push_right_to_empty_list() {
+        unimplemented!();
+    }
+
+    #[test]
+    fn test_push_right_updates_tail() {
+        unimplemented!();
+    }
+
+    #[test]
+    fn test_find_in_empty_list() {
+        unimplemented!();
+    }
+
+    #[test]
+    fn test_find_non_existent_element() {
+        unimplemented!();
+    }
+
+    #[test]
+    fn test_find_head_element() {
+        unimplemented!();
+    }
+
+    #[test]
+    fn test_find_tail_element() {
+        unimplemented!();
+    }
+
+    #[test]
+    fn test_find_middle_element() {
+        unimplemented!();
+    }
+
+    #[test]
+    fn test_delete_from_empty_list() {
+        unimplemented!();
+    }
+
+    #[test]
+    fn test_delete_non_existent_element() {
+        unimplemented!();
+    }
+
+    #[test]
+    fn test_delete_only_element_in_list() {
+        unimplemented!();
+    }
+
+    #[test]
+    fn test_delete_head_element_updates_head() {
+        unimplemented!();
+    }
+
+    #[test]
+    fn test_delete_tail_element_updates_tail() {
+        unimplemented!();
+    }
+
+    #[test]
+    fn test_delete_middle_element() {
+        unimplemented!();
+    }
+
+    #[test]
+    fn test_interleaved_push_and_delete() {
+        unimplemented!();
+    }
+
+    #[test]
+    fn test_drop_on_list_with_items() {
+        unimplemented!();
     }
 }
