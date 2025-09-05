@@ -68,3 +68,21 @@ impl<T> LinkedList<T> {
         }
     }
 }
+
+impl<T: PartialEq> LinkedList<T> {
+    pub fn find(&self, val: &T) -> Option<&T> {
+        let mut current_link = &self.head;
+
+        while let Some(current_node) = current_link {
+            if current_node.val == *val {
+                return Some(&current_node.val);
+            }
+            current_link = &current_node.next;
+        }
+        None
+    }
+
+    pub fn delete(&mut self, val: &T) -> Option<T> {
+
+    }
+}
