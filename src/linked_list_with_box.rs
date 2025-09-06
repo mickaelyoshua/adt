@@ -1,4 +1,4 @@
-use std::ptr::{self, null_mut};
+use std::ptr;
 
 type Link<T> = Option<Box<Node<T>>>;
 
@@ -27,6 +27,16 @@ impl<T> Default for LinkedList<T> {
             head: None,
             tail: ptr::null_mut()
         }
+    }
+}
+
+impl<T> From<Vec<T>> for LinkedList<T> {
+    fn from(value: Vec<T>) -> Self {
+        let mut list = LinkedList::new();
+        for v in value {
+            list.push_right(v);
+        }
+        list
     }
 }
 
@@ -119,93 +129,200 @@ impl<T: PartialEq> LinkedList<T> {
 mod tests {
     use super::*;
 
+    // --- Constructor tests ---
     #[test]
     fn test_new_list_is_empty() {
-        unimplemented!();
+        let list: LinkedList<i32> = LinkedList::new();
+        assert!(list.head.is_none());
+        assert!(list.tail.is_null());
+    }
+
+    // --- From<Vec<T>> tests ---
+    #[test]
+    fn test_from_vec() {
+        let list = LinkedList::from(vec![1, 2, 3]);
+        assert_eq!(list.head.as_ref().unwrap().val, 1);
+        unsafe {
+            assert_eq!((*list.tail).val, 3);
+        }
+        assert_eq!(list.find(&1), Some(&1));
+        assert_eq!(list.find(&2), Some(&2));
+        assert_eq!(list.find(&3), Some(&3));
     }
 
     #[test]
+    fn test_from_empty_vec() {
+        let list = LinkedList::from(Vec::<i32>::new());
+        assert!(list.head.is_none());
+        assert!(list.tail.is_null());
+    }
+
+    // --- Push operation tests ---
+    #[test]
     fn test_push_left_to_empty_list() {
-        unimplemented!();
+        let mut list = LinkedList::new();
+        list.push_left(1);
+        assert_eq!(list.head.as_ref().unwrap().val, 1);
+        unsafe {
+            assert_eq!((*list.tail).val, 1);
+        }
     }
 
     #[test]
     fn test_push_left_updates_head() {
-        unimplemented!();
+        let mut list = LinkedList::new();
+        list.push_left(1);
+        list.push_left(2);
+        assert_eq!(list.head.as_ref().unwrap().val, 2);
+        unsafe {
+            assert_eq!((*list.tail).val, 1);
+        }
     }
 
     #[test]
     fn test_push_right_to_empty_list() {
-        unimplemented!();
+        let mut list = LinkedList::new();
+        list.push_right(1);
+        assert_eq!(list.head.as_ref().unwrap().val, 1);
+        unsafe {
+            assert_eq!((*list.tail).val, 1);
+        }
     }
 
     #[test]
     fn test_push_right_updates_tail() {
-        unimplemented!();
+        let mut list = LinkedList::new();
+        list.push_right(1);
+        list.push_right(2);
+        assert_eq!(list.head.as_ref().unwrap().val, 1);
+        unsafe {
+            assert_eq!((*list.tail).val, 2);
+        }
     }
 
+    // --- Find operation tests ---
     #[test]
     fn test_find_in_empty_list() {
-        unimplemented!();
+        let list: LinkedList<i32> = LinkedList::new();
+        assert_eq!(list.find(&1), None);
     }
 
     #[test]
     fn test_find_non_existent_element() {
-        unimplemented!();
+        let list = LinkedList::from(vec![1, 2]);
+        assert_eq!(list.find(&3), None);
     }
 
     #[test]
     fn test_find_head_element() {
-        unimplemented!();
+        let list = LinkedList::from(vec![1, 2]);
+        assert_eq!(list.find(&1), Some(&1));
     }
 
     #[test]
     fn test_find_tail_element() {
-        unimplemented!();
+        let list = LinkedList::from(vec![1, 2]);
+        assert_eq!(list.find(&2), Some(&2));
     }
 
     #[test]
     fn test_find_middle_element() {
-        unimplemented!();
+        let list = LinkedList::from(vec![1, 2, 3]);
+        assert_eq!(list.find(&2), Some(&2));
     }
 
+    // --- Delete operation tests ---
     #[test]
     fn test_delete_from_empty_list() {
-        unimplemented!();
+        let mut list: LinkedList<i32> = LinkedList::new();
+        assert_eq!(list.delete(&1), None);
     }
 
     #[test]
     fn test_delete_non_existent_element() {
-        unimplemented!();
+        let mut list = LinkedList::from(vec![1, 2, 3]);
+        assert_eq!(list.delete(&4), None);
     }
 
     #[test]
     fn test_delete_only_element_in_list() {
-        unimplemented!();
+        let mut list = LinkedList::from(vec![1]);
+        assert_eq!(list.delete(&1), Some(1));
+        assert!(list.head.is_none());
+        assert!(list.tail.is_null());
     }
 
     #[test]
     fn test_delete_head_element_updates_head() {
-        unimplemented!();
+        let mut list = LinkedList::from(vec![1, 2, 3]);
+        assert_eq!(list.delete(&1), Some(1));
+        assert_eq!(list.head.as_ref().unwrap().val, 2);
+        assert_eq!(list.find(&1), None);
     }
 
     #[test]
     fn test_delete_tail_element_updates_tail() {
-        unimplemented!();
+        let mut list = LinkedList::from(vec![1, 2, 3]);
+        assert_eq!(list.delete(&3), Some(3));
+        unsafe {
+            assert_eq!((*list.tail).val, 2);
+        }
+        assert_eq!(list.find(&3), None);
     }
 
     #[test]
     fn test_delete_middle_element() {
-        unimplemented!();
+        let mut list = LinkedList::from(vec![1, 2, 3]);
+        assert_eq!(list.delete(&2), Some(2));
+        assert_eq!(list.head.as_ref().unwrap().next.as_ref().unwrap().val, 3);
+        assert_eq!(list.find(&2), None);
     }
 
+    // --- Mixed operation tests ---
     #[test]
     fn test_interleaved_push_and_delete() {
-        unimplemented!();
+        let mut list = LinkedList::new();
+        list.push_right(1);
+        list.push_right(2);
+        list.push_left(0); // 0, 1, 2
+        assert_eq!(list.delete(&1), Some(1)); // 0, 2
+        assert_eq!(list.head.as_ref().unwrap().val, 0);
+        unsafe {
+            assert_eq!((*list.tail).val, 2);
+        }
+        list.push_right(3); // 0, 2, 3
+        assert_eq!(list.find(&3), Some(&3));
+        unsafe {
+            assert_eq!((*list.tail).val, 3);
+        }
+        assert_eq!(list.delete(&0), Some(0)); // 2, 3
+        assert_eq!(list.head.as_ref().unwrap().val, 2);
     }
 
+    // --- Drop implementation tests ---
     #[test]
     fn test_drop_on_list_with_items() {
-        unimplemented!();
+        use std::cell::RefCell;
+        let drop_count = RefCell::new(0);
+
+        struct DropCounter<'a> {
+            _val: i32,
+            count: &'a RefCell<i32>,
+        }
+
+        impl<'a> Drop for DropCounter<'a> {
+            fn drop(&mut self) {
+                *self.count.borrow_mut() += 1;
+            }
+        }
+
+        {
+            let mut list = LinkedList::new();
+            list.push_right(DropCounter { _val: 1, count: &drop_count });
+            list.push_right(DropCounter { _val: 2, count: &drop_count });
+            list.push_right(DropCounter { _val: 3, count: &drop_count });
+        } // list drops here
+
+        assert_eq!(*drop_count.borrow(), 3);
     }
 }
