@@ -1,2 +1,4 @@
 pub mod linked_list_with_box;
 pub mod linked_list_with_pointer;
+pub mod stack_with_fixed_array;
+pub mod stack_with_vector;
