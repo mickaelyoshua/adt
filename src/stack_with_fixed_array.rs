@@ -64,7 +64,6 @@ impl<T: Default + Copy, const N: usize> Stack<T, N> {
         self.elements[self.top] = T::default();
         Some(value)
     }
-
 }
 
 #[cfg(test)]
