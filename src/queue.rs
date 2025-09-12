@@ -83,3 +83,95 @@ impl<T> Queue<T> {
         Some(removed_node.val)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Queue;
+
+    #[test]
+    fn test_new_queue_is_empty() {
+        let mut q: Queue<i32> = Queue::new();
+        assert_eq!(q.len(), 0);
+        assert!(q.is_empty());
+        assert_eq!(q.peek(), None);
+        assert_eq!(q.dequeue(), None);
+    }
+
+    #[test]
+    fn test_enqueue() {
+        let mut q = Queue::new();
+        q.enqueue(10);
+        assert_eq!(q.len(), 1);
+        assert!(!q.is_empty());
+        assert_eq!(q.peek(), Some(&10));
+
+        q.enqueue(20);
+        assert_eq!(q.len(), 2);
+        assert_eq!(q.peek(), Some(&10)); // Should still be the first element
+    }
+
+    #[test]
+    fn test_dequeue() {
+        let mut q = Queue::new();
+        q.enqueue(1);
+        q.enqueue(2);
+
+        assert_eq!(q.dequeue(), Some(1));
+        assert_eq!(q.len(), 1);
+        assert_eq!(q.peek(), Some(&2));
+
+        assert_eq!(q.dequeue(), Some(2));
+        assert_eq!(q.len(), 0);
+        assert!(q.is_empty());
+        assert_eq!(q.peek(), None);
+
+        assert_eq!(q.dequeue(), None);
+    }
+
+    #[test]
+    fn test_peek() {
+        let mut q = Queue::new();
+        assert_eq!(q.peek(), None);
+
+        q.enqueue(1);
+        q.enqueue(2);
+        assert_eq!(q.peek(), Some(&1));
+        // Peek should not change the queue
+        assert_eq!(q.peek(), Some(&1));
+        assert_eq!(q.len(), 2);
+    }
+
+    #[test]
+    fn test_fifo_order() {
+        let mut q = Queue::new();
+        q.enqueue(1);
+        q.enqueue(2);
+        q.enqueue(3);
+
+        assert_eq!(q.dequeue(), Some(1));
+        assert_eq!(q.dequeue(), Some(2));
+        assert_eq!(q.dequeue(), Some(3));
+        assert_eq!(q.dequeue(), None);
+    }
+
+    #[test]
+    fn test_exhaust_and_reuse() {
+        let mut q = Queue::new();
+        q.enqueue(10);
+        q.enqueue(20);
+
+        assert_eq!(q.dequeue(), Some(10));
+        assert_eq!(q.dequeue(), Some(20));
+        assert_eq!(q.dequeue(), None);
+        assert!(q.is_empty());
+
+        // After becoming empty, the queue should work correctly again
+        q.enqueue(30);
+        assert_eq!(q.len(), 1);
+        assert!(!q.is_empty());
+        assert_eq!(q.peek(), Some(&30));
+        
+        assert_eq!(q.dequeue(), Some(30));
+        assert!(q.is_empty());
+    }
+}
