@@ -13,6 +13,16 @@ pub struct Queue<T> {
     len: usize,
 }
 
+impl<T> Default for Queue<T> {
+    fn default() -> Self {
+        Self {
+            head: None,
+            tail: ptr::null_mut(),
+            len: 0,
+        }
+    }
+}
+
 impl<T> Drop for Queue<T> {
     fn drop(&mut self) {
         while let Some(node) = self.head.take() {
@@ -23,30 +33,43 @@ impl<T> Drop for Queue<T> {
 
 impl<T> Queue<T> {
     pub fn new() -> Self {
-        Self {
-            head: None,
-            tail: ptr::null_mut(),
-            len: 0,
-        }
+        Self::default()
     }
 
     pub fn is_empty(&self) -> bool {
-        unimplemented!()
+        self.len == 0
     }
 
     pub fn len(&self) -> usize {
-        unimplemented!()
-    }
-
-    pub fn enqueue(&mut self, val: T) {
-        unimplemented!()
-    }
-
-    pub fn dequeue(&mut self) -> Option<T> {
-        unimplemented!()
+        self.len
     }
 
     pub fn peek(&self) -> Option<&T> {
+        Some(&self.head.as_ref()?.val)
+        // ? operator will make the function return None if head turns out to be None
+    }
+
+    pub fn enqueue(&mut self, val: T) {
+        let mut new_boxed_node = Box::new(Node {
+            val,
+            next: None,
+        });
+
+        let new_boxed_node_ptr: *mut Node<T> = &mut *new_boxed_node;
+
+        if self.head.is_none() {
+            self.head = Some(new_boxed_node);
+        } else {
+            unsafe {
+                (*self.tail).next = Some(new_boxed_node);
+            }
+        }
+
+        self.tail = new_boxed_node_ptr;
+        self.len += 1;
+    }
+
+    pub fn dequeue(&mut self) -> Option<T> {
         unimplemented!()
     }
 }
