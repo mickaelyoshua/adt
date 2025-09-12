@@ -57,7 +57,8 @@ impl<T> Queue<T> {
 
         let new_boxed_node_ptr: *mut Node<T> = &mut *new_boxed_node;
 
-        if self.head.is_none() {
+        // if queue is empty
+        if self.tail.is_null() {
             self.head = Some(new_boxed_node);
         } else {
             unsafe {
@@ -70,6 +71,15 @@ impl<T> Queue<T> {
     }
 
     pub fn dequeue(&mut self) -> Option<T> {
-        unimplemented!()
+        let removed_node = self.head.take()?;
+        self.head = removed_node.next;
+
+        self.len -= 1;
+
+        if self.head.is_none() {
+            self.tail = ptr::null_mut();
+        }
+
+        Some(removed_node.val)
     }
 }
