@@ -1,3 +1,5 @@
+use std::ptr;
+
 type Link<T> = Option<Box<Node<T>>>;
 
 struct Node<T> {
@@ -75,23 +77,50 @@ impl<T> BinarySearchTree<T> {
     }
 }
 
-impl<T: PartialEq + PartialOrd> BinarySearchTree<T> {
+impl<T: Ord> BinarySearchTree<T> {
     pub fn search(&self, val: &T) -> Option<&T> {
-        let mut current_node = &self.root;
+        let mut current_node = self.root.as_ref();
         while let Some(node) = current_node {
             if node.val == *val {
                 return Some(&node.val);
             } else if node.val < *val {
-                current_node = &node.right;
+                current_node = node.right.as_ref();
             } else {
-                current_node = &node.left;
+                current_node = node.left.as_ref();
             }
         }
         None
     }
 
+    #[allow(clippy::while_let_loop)] // while let will create a single continuous borrow
+                                    // here is needed multiple (non-simultaneously) borrows and multible matches
     pub fn insert(&mut self, val: T) {
-        unimplemented!()
+        let mut current_link: &mut Link<T> = &mut self.root;
+        let mut parent: *mut Node<T> = ptr::null_mut();
+        
+        loop {
+            let node = match current_link {
+                Some(node) => node,
+                None => break,
+            };
+
+            parent = &mut **node as *mut Node<T>;
+
+            match val.cmp(&node.val) {
+                std::cmp::Ordering::Less => current_link = &mut node.left,
+                std::cmp::Ordering::Greater => current_link = &mut node.right,
+                std::cmp::Ordering::Equal => return,
+            }
+        }
+
+        let new_node = Box::new(Node {
+            val,
+            parent,
+            left: None,
+            right: None,
+        });
+        
+        *current_link = Some(new_node);
     }
 
     pub fn delete(&mut self, val: &T) -> Option<T> {
