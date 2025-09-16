@@ -1,4 +1,5 @@
 use std::ptr;
+use std::cmp::Ordering;
 
 type Link<T> = Option<Box<Node<T>>>;
 
@@ -107,9 +108,9 @@ impl<T: Ord> BinarySearchTree<T> {
             parent = &mut **node as *mut Node<T>;
 
             match val.cmp(&node.val) {
-                std::cmp::Ordering::Less => current_link = &mut node.left,
-                std::cmp::Ordering::Greater => current_link = &mut node.right,
-                std::cmp::Ordering::Equal => return,
+                Ordering::Less => current_link = &mut node.left,
+                Ordering::Greater => current_link = &mut node.right,
+                Ordering::Equal => return,
             }
         }
 
@@ -124,6 +125,48 @@ impl<T: Ord> BinarySearchTree<T> {
     }
 
     pub fn delete(&mut self, val: &T) -> Option<T> {
-        unimplemented!()
+        let mut current_link_ptr: *mut Link<T> = &mut self.root;
+        let mut parent: *mut Node<T> = ptr::null_mut();
+
+        loop {
+            let node = unsafe {
+                match (*current_link_ptr).as_mut() {
+                    Some(node) => node,
+                    None => break,
+                }
+            };
+            
+            parent = &mut **node as *mut Node<T>;
+
+            match val.cmp(&node.val) {
+                Ordering::Less => current_link_ptr = &mut node.left,
+                Ordering::Greater => current_link_ptr = &mut node.right,
+                Ordering::Equal => break,
+            }
+        }
+
+
+        let node_to_delete = unsafe { (*current_link_ptr).take() }?;
+
+        match (&node_to_delete.left, &node_to_delete.right) {
+            // Node has no children
+            (None,None) => {
+                
+            },
+
+            // Node has one children
+            (Some(child), None) | (None,Some(child)) => {
+
+            },
+
+            // Node has two children
+            (Some(left),Some(right)) => {
+
+            }
+        }
+
+        None
+
+
     }
 }
