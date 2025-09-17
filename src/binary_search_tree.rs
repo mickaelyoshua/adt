@@ -126,7 +126,6 @@ impl<T: Ord> BinarySearchTree<T> {
 
     pub fn delete(&mut self, val: &T) -> Option<T> {
         let mut current_link_ptr: *mut Link<T> = &mut self.root;
-        let mut parent: *mut Node<T> = ptr::null_mut();
 
         loop {
             let node = unsafe {
@@ -136,8 +135,6 @@ impl<T: Ord> BinarySearchTree<T> {
                 }
             };
             
-            parent = &mut **node as *mut Node<T>;
-
             match val.cmp(&node.val) {
                 Ordering::Less => current_link_ptr = &mut node.left,
                 Ordering::Greater => current_link_ptr = &mut node.right,
@@ -147,26 +144,70 @@ impl<T: Ord> BinarySearchTree<T> {
 
 
         let node_to_delete = unsafe { (*current_link_ptr).take() }?;
+        let parent_of_deleted = node_to_delete.parent;
 
-        match (&node_to_delete.left, &node_to_delete.right) {
+        let deleted_val = match (node_to_delete.left, node_to_delete.right) {
             // Node has no children
-            (None,None) => {
-                
+            (None, None) => {
+                // since the node where taken, it has None as its value, so the job is already done
+                node_to_delete.val
             },
 
             // Node has one children
-            (Some(child), None) | (None,Some(child)) => {
-
+            (Some(mut child), None) | (None, Some(mut child)) => {
+                child.parent = parent_of_deleted;
+                unsafe { *current_link_ptr = Some(child); }
+                node_to_delete.val
             },
 
             // Node has two children
-            (Some(left),Some(right)) => {
+            (Some(mut left), Some(right)) => {
+                // GET THE MOST LEFT NODE FROM THE RIGHT TREE
+                let mut right_subtree_link = Some(right);
+                let mut successor_node = Self::detach_min(&mut right_subtree_link);
+                successor_node.parent = parent_of_deleted;
 
+                // UPDATE SUCCESSOR LEFT SIDE
+                left.parent = &mut *successor_node;
+                successor_node.left = Some(left);
+
+                // UPDATE SUCCESSOR RIGHT SIDE
+                if let Some(ref mut right_node) = right_subtree_link {
+                    right_node.parent = &mut *successor_node;
+                }
+                successor_node.right = right_subtree_link;
+
+                // ATTACH THE NEW SUBTREE TO THE REST OF THE TREE
+                unsafe { *current_link_ptr = Some(successor_node) };
+
+                node_to_delete.val
             }
+        };
+
+        Some(deleted_val)
+    }
+
+    fn detach_min(link: &mut Link<T>) -> Box<Node<T>> {
+        let mut current_link = link;
+
+        // here the first link must be Some
+        // search the node where the left is None (the minimum value)
+        while current_link.as_ref().unwrap().left.is_some() {
+            current_link = &mut current_link.as_mut().unwrap().left;
         }
 
-        None
+        // remove from the tree
+        let mut min_node = current_link.take().unwrap();
 
+        // attach the right node to the place of the removed node
+        // if there is no right child take() will return None
+        *current_link = min_node.right.take();
 
+        // if there is a right child, link the parent as the parent of the removed node
+        if let Some(right_child) = current_link.as_mut() {
+            right_child.parent = min_node.parent;
+        }
+        
+        min_node
     }
 }
