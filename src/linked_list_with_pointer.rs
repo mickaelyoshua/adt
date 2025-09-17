@@ -199,5 +199,4 @@ impl<T: PartialEq> LinkedList<T> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 }
