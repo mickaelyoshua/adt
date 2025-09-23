@@ -7,3 +7,5 @@ pub mod stack_with_vector;
 pub mod queue;
 
 pub mod binary_search_tree;
+
+pub mod hashing;
