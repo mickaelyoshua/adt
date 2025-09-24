@@ -5,6 +5,7 @@ pub mod stack_with_fixed_array;
 pub mod stack_with_vector;
 
 pub mod queue;
+pub mod priority_queue;
 
 pub mod binary_search_tree;
 
