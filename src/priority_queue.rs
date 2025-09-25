@@ -8,6 +8,21 @@ impl<T: PartialOrd> PriorityQueue<T> {
         PriorityQueue { vals: Vec::new() }
     }
 
+    pub fn from_vec(values: Vec<T>) -> Self {
+        let mut q = PriorityQueue { vals: values };
+
+        if q.vals.len() <= 1 {
+            return q;
+        }
+        
+        let non_leaf_node_index = q.parent(q.vals.len()-1).unwrap();
+        for i in (0..=non_leaf_node_index).rev() {
+            q.bubble_down(i);
+        }
+        q
+
+    }
+
     fn parent(&self, index: usize) -> Option<usize> {
         if index == 0 {
             return None;
@@ -33,8 +48,8 @@ impl<T: PartialOrd> PriorityQueue<T> {
 
     fn bubble_up(&mut self, index: usize) {
         if let Some(parent_index) = self.parent(index) && self.vals[parent_index] > self.vals[index] {
-                self.vals.swap(index, parent_index);
-                self.bubble_up(parent_index);
+            self.vals.swap(index, parent_index);
+            self.bubble_up(parent_index);
         }
     }
 
