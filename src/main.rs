@@ -1,15 +1,108 @@
-use adt::hashing::HashMap;
+use std::fmt::Display;
+
+type Link<T> = Option<Box<Node<T>>>;
+
+#[derive(Debug, PartialEq)]
+pub struct Node<T> {
+    val: T,
+    left: Link<T>,
+    right: Link<T>,
+}
+
+pub struct BinaryTree<T> {
+    root: Link<T>,
+}
 
 fn main() {
-    let words = vec!["listen", "silent", "enlist", "hello", "world", "thing"];
+    let tree = BinaryTree {
+        root: Some(Box::new(Node {
+            val: 'A',
+            left: Some(Box::new(Node {
+                val: 'B',
+                left: Some(Box::new(Node {
+                    val: 'D',
+                    left: None,
+                    right: None,
+                })),
+                right: Some(Box::new(Node {
+                    val: 'E',
+                    left: Some(Box::new(Node {
+                        val: 'H',
+                        left: None,
+                        right: None,
+                    })),
+                    right: Some(Box::new(Node {
+                        val: 'I',
+                        left: None,
+                        right: None,
+                    })),
+                })),
+            })),
+            right: Some(Box::new(Node {
+                val: 'C',
+                left: Some(Box::new(Node {
+                    val: 'F',
+                    left: None,
+                    right: Some(Box::new(Node {
+                        val: 'K',
+                        left: None,
+                        right: None,
+                    })),
+                })),
+                right: None,
+            })),
+        })),
+    };
 
-    // Choose a size for your hash map (a prime number is often a good choice).
-    let mut hash_map = HashMap::new(101);
+    BinaryTree::show_tree(&tree);
+}
 
-    for word in words {
-        hash_map.insert(word);
+impl<T> Default for BinaryTree<T> {
+    fn default() -> Self {
+        Self { root: None }
+    }
+}
+
+impl<T> Drop for BinaryTree<T> {
+    fn drop(&mut self) {
+        let mut stack = Vec::new();
+        if let Some(root) = self.root.take() {
+            stack.push(root);
+        }
+
+        while let Some(mut node) = stack.pop() {
+            if let Some(left_child) = node.left.take() {
+                stack.push(left_child);
+            }
+            if let Some(right_child) = node.right.take() {
+                stack.push(right_child);
+            }
+        }
+    }
+}
+
+impl<T> BinaryTree<T> {
+    pub fn new() -> Self {
+        Self::default()
     }
 
-    let anagrams = hash_map.get_anagram_groups();
-    println!("{:?}", anagrams);
+}
+
+impl<T: Display> BinaryTree<T> {
+    pub fn show_tree(bt: &BinaryTree<T>) {
+        if bt.root.is_none(){
+            return
+        }
+        Self::show_tree_recursive(&bt.root);
+    }
+
+    pub fn show_tree_recursive(link: &Link<T>) {
+        if let Some(node) = link {
+            print!("{}", node.val);
+            print!("(");
+            Self::show_tree_recursive(&node.left);
+            Self::show_tree_recursive(&node.right);
+            print!(")");
+        }
+    }
 }
