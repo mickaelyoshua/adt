@@ -9,5 +9,6 @@ pub mod priority_queue;
 pub mod circular_queue;
 
 pub mod binary_search_tree;
+pub mod avl_tree;
 
 pub mod hashing;
