@@ -54,7 +54,9 @@ fn main() {
         })),
     };
 
-    BinaryTree::show_tree(&tree);
+    tree.show_tree();
+    println!();
+    tree.traverse();
 }
 
 impl<T> Default for BinaryTree<T> {
@@ -81,22 +83,36 @@ impl<T> Drop for BinaryTree<T> {
     }
 }
 
-impl<T> BinaryTree<T> {
+impl<T: Display> BinaryTree<T> {
     pub fn new() -> Self {
         Self::default()
     }
 
+    pub fn traverse(&self) {
+        if self.root.is_none() {
+            return
+        }
+        Self::traverse_recursive(&self.root);
+    }
+
+    fn traverse_recursive(link: &Link<T>) {
+        if let Some(node) = link {
+            Self::traverse_recursive(&node.left);
+            print!("{} ", node.val);
+            Self::traverse_recursive(&node.right);
+        }
+    }
 }
 
 impl<T: Display> BinaryTree<T> {
-    pub fn show_tree(bt: &BinaryTree<T>) {
-        if bt.root.is_none(){
+    pub fn show_tree(&self) {
+        if self.root.is_none(){
             return
         }
-        Self::show_tree_recursive(&bt.root);
+        Self::show_tree_recursive(&self.root);
     }
 
-    pub fn show_tree_recursive(link: &Link<T>) {
+    fn show_tree_recursive(link: &Link<T>) {
         if let Some(node) = link {
             print!("{}", node.val);
             print!("(");
