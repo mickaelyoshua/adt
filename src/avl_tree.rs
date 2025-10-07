@@ -17,38 +17,28 @@ fn height<T>(link: &Link<T>) -> usize {
 fn rotate_left<T>(mut node: Box<Node<T>>) -> Box<Node<T>> {
     // Extract right tree
     let mut new_root_node = node.right.take().unwrap();
-
     // Move new root left to extracted node's right
     node.right = new_root_node.left.take();
-
     // Update height
     node.update_height();
-
     // Move extracted node to the left of new root
     new_root_node.left = Some(node);
-
     // Update height
     new_root_node.update_height();
-
     new_root_node
 }
 
 fn rotate_right<T>(mut node: Box<Node<T>>) -> Box<Node<T>> {
     // Extract left tree
     let mut new_root_node = node.left.take().unwrap();
-    
     // Move new root right to extracted node's left
     node.left = new_root_node.right.take();
-
     // Update height
     node.update_height();
-
     // Move extracted node to the right of new root
     new_root_node.right = Some(node);
-
     // Update height
     new_root_node.update_height();
-
     new_root_node
 }
 
@@ -103,41 +93,6 @@ impl<T> AvlTree<T> {
     pub fn new() -> Self {
         Self { root: None }
     }
-}
-
-impl<T: Ord> AvlTree<T> {
-    pub fn insert(&mut self, value: T) {
-        let root = self.root.take();
-        self.root = Some(Self::insert_recursive(root, value));
-    }
-
-    fn insert_recursive(link: Link<T>, value: T) -> Box<Node<T>> {
-        match link {
-            None => {
-                Box::new(Node {
-                    val: value,
-                    left: None,
-                    right: None,
-                    height: 1,
-                })
-            },
-            Some(mut node) => {
-                match value.cmp(&node.val) {
-                    Ordering::Equal => (),
-                    Ordering::Less => {
-                        let left = Self::insert_recursive(node.left.take(), value);
-                        node.left = Some(left);
-                    },
-                    Ordering::Greater => {
-                        let right = Self::insert_recursive(node.right.take(), value);
-                        node.right = Some(right);
-                    },
-                }
-                node.update_height();
-                rebalance(node)
-            },
-        }
-    }
 
     // Helper method to check if the tree maintains AVL property
     fn is_balanced(&self) -> bool {
@@ -149,7 +104,7 @@ impl<T: Ord> AvlTree<T> {
             None => true,
             Some(n) => {
                 let bf = n.balance_factor();
-                if bf < -1 || bf > 1 {
+                if (-1..1).contains(&bf) {
                     return false;
                 }
                 Self::check_balance(&n.left) && Self::check_balance(&n.right)
@@ -192,6 +147,41 @@ impl<T: Ord> AvlTree<T> {
             Self::in_order_helper(&n.left, result);
             result.push(&n.val);
             Self::in_order_helper(&n.right, result);
+        }
+    }
+}
+
+impl<T: Ord> AvlTree<T> {
+    pub fn insert(&mut self, value: T) {
+        let root = self.root.take();
+        self.root = Some(Self::insert_recursive(root, value));
+    }
+
+    fn insert_recursive(link: Link<T>, value: T) -> Box<Node<T>> {
+        match link {
+            None => {
+                Box::new(Node {
+                    val: value,
+                    left: None,
+                    right: None,
+                    height: 1,
+                })
+            },
+            Some(mut node) => {
+                match value.cmp(&node.val) {
+                    Ordering::Equal => (),
+                    Ordering::Less => {
+                        let left = Self::insert_recursive(node.left.take(), value);
+                        node.left = Some(left);
+                    },
+                    Ordering::Greater => {
+                        let right = Self::insert_recursive(node.right.take(), value);
+                        node.right = Some(right);
+                    },
+                }
+                node.update_height();
+                rebalance(node)
+            },
         }
     }
 }
